@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Crate
+Comment=Search your music by sound
+Exec=crate
+Icon=crate
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;
+StartupWMClass=io.github.jaisawhney.crate
