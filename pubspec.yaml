@@ -19,6 +19,7 @@ dependencies:
   flutter_edge_ai: ^2.6.0
   flutter_edge_ai_litertlm: ^1.20.0
   flutter_riverpod: ^3.5.0
+  flutter_svg: ^2.5.0
   just_audio: ^0.10.6
   just_audio_media_kit: ^2.1.0
   material_ui: ^1.11.1
@@ -36,9 +37,23 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   build_runner: 2.15.1
   objectbox_generator: 5.3.2
+  launcher_icons: 0.16.0
+
+launcher_icons:
+  image_path: assets/icon/crate.svg
+  macos:
+    generate: true
+    padding: 10
+  windows:
+    generate: true
+  linux:
+    generate: true
+    image_path: assets/icon/crate.linux.png
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon/
 
 ffmpeg_kit_extended_config:
   type: "audio"
