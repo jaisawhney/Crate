@@ -11,3 +11,7 @@ final libraryRepositoryProvider = Provider(
   (ref) =>
       LibraryRepository(database: ref.watch(libraryDatabaseServiceProvider)),
 );
+
+final libraryRefreshProvider = FutureProvider(
+  (ref) => ref.watch(libraryRepositoryProvider).refresh(),
+);

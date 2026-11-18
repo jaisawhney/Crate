@@ -8,6 +8,12 @@ final libraryFoldersProvider = Provider(
   (ref) => ref.watch(libraryRepositoryProvider).loadFolders(),
 );
 
+// reloads when the scan finishes
+final libraryTracksProvider = Provider((ref) {
+  ref.watch(libraryRefreshProvider);
+  return ref.watch(libraryRepositoryProvider).loadTracks();
+});
+
 final libraryProvider = NotifierProvider(LibraryNotifier.new);
 
 class LibraryNotifier extends Notifier<void> {
@@ -18,12 +24,18 @@ class LibraryNotifier extends Notifier<void> {
     final path = await getDirectoryPath();
     if (path == null) return;
 
-    ref.read(libraryRepositoryProvider).addFolder(path);
+    final library = ref.read(libraryRepositoryProvider);
+    library.addFolder(path);
     ref.invalidate(libraryFoldersProvider);
+    await library.refresh();
+    ref.invalidate(libraryTracksProvider);
   }
 
-  void removeFolder(LibraryFolder folder) {
-    ref.read(libraryRepositoryProvider).removeFolder(folder);
+  Future<void> removeFolder(LibraryFolder folder) async {
+    final library = ref.read(libraryRepositoryProvider);
+    library.removeFolder(folder);
     ref.invalidate(libraryFoldersProvider);
+    await library.refresh();
+    ref.invalidate(libraryTracksProvider);
   }
 }
