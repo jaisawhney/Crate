@@ -39,7 +39,16 @@ class LibraryScreen extends ConsumerWidget {
               children: [
                 SizedBox(width: 280, child: _Folders()),
                 SizedBox(width: 16),
-                Expanded(child: _Songs()),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _SongSearch(),
+                      SizedBox(height: 12),
+                      Expanded(child: _Songs()),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -100,17 +109,33 @@ class _Folders extends ConsumerWidget {
   }
 }
 
+class _SongSearch extends ConsumerWidget {
+  const _SongSearch();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SearchBar(
+      hintText: 'Search by title, artist or genre',
+      leading: const Icon(Icons.search),
+      onChanged: ref.read(songSearchProvider.notifier).set,
+    );
+  }
+}
+
 class _Songs extends ConsumerWidget {
   const _Songs();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final tracks = ref.watch(libraryTracksProvider);
+    final tracks = ref.watch(foundTracksProvider);
+    final total = ref.watch(libraryTracksProvider).length;
 
+    var subtitle = 'Titles, artists and genres from your tags';
+    if (tracks.length < total) subtitle = '${tracks.length} of $total songs';
     return Panel(
       title: 'Songs',
-      subtitle: 'Titles, artists and genres from your tags',
+      subtitle: subtitle,
       child: ListView.separated(
         itemCount: tracks.length,
         separatorBuilder: (context, idx) => const Divider(),
