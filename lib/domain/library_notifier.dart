@@ -3,16 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/dependencies.dart';
 import '../data/services/database/library_folder.dart';
+import '../data/services/database/track.dart';
 
-final libraryFoldersProvider = Provider(
-  (ref) => ref.watch(libraryRepositoryProvider).loadFolders(),
+final analysisProgressProvider = StreamProvider((ref) async* {
+  final library = await ref.watch(libraryRepositoryProvider.future);
+  yield* library.watchAnalysisProgress();
+});
+
+final analyzingProvider = Provider(
+  (ref) => ref.watch(analysisProgressProvider).value != null,
 );
 
-// reloads when the scan finishes
-final libraryTracksProvider = Provider((ref) {
-  ref.watch(libraryRefreshProvider);
-  return ref.watch(libraryRepositoryProvider).loadTracks();
+final libraryFoldersProvider = FutureProvider((ref) async {
+  final library = await ref.watch(libraryRepositoryProvider.future);
+  return library.loadFolders();
 });
+
+// reloads when analysis starts and ends and when the scan finishes
+final libraryTracksProvider = FutureProvider((ref) async {
+  ref.watch(analyzingProvider);
+  ref.watch(libraryRefreshProvider);
+  final library = await ref.watch(libraryRepositoryProvider.future);
+  return library.loadTracks();
+});
+
+final tracksProvider = Provider(
+  (ref) => ref.watch(libraryTracksProvider).value ?? const <Track>[],
+);
 
 final libraryProvider = NotifierProvider(LibraryNotifier.new);
 
@@ -24,7 +41,7 @@ class LibraryNotifier extends Notifier<void> {
     final path = await getDirectoryPath();
     if (path == null) return;
 
-    final library = ref.read(libraryRepositoryProvider);
+    final library = await ref.read(libraryRepositoryProvider.future);
     library.addFolder(path);
     ref.invalidate(libraryFoldersProvider);
     await library.refresh();
@@ -32,7 +49,7 @@ class LibraryNotifier extends Notifier<void> {
   }
 
   Future<void> removeFolder(LibraryFolder folder) async {
-    final library = ref.read(libraryRepositoryProvider);
+    final library = await ref.read(libraryRepositoryProvider.future);
     library.removeFolder(folder);
     ref.invalidate(libraryFoldersProvider);
     await library.refresh();

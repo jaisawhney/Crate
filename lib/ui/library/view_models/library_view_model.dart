@@ -19,7 +19,7 @@ class SongSearch extends Notifier<String> {
 
 final foundTracksProvider = Provider((ref) {
   final search = ref.watch(songSearchProvider);
-  final tracks = ref.watch(libraryTracksProvider);
+  final tracks = ref.watch(tracksProvider);
   if (search.isEmpty) return tracks;
 
   final found = <Track>[];
@@ -34,15 +34,15 @@ final foundTracksProvider = Provider((ref) {
 
 final libraryLengthProvider = Provider((ref) {
   var length = Duration.zero;
-  for (final track in ref.watch(libraryTracksProvider)) {
+  for (final track in ref.watch(tracksProvider)) {
     length += track.duration ?? Duration.zero;
   }
   return length;
 });
 
 final folderSongCountsProvider = Provider((ref) {
-  final folders = ref.watch(libraryFoldersProvider);
-  final tracks = ref.watch(libraryTracksProvider);
+  final folders = ref.watch(libraryFoldersProvider).value ?? const [];
+  final tracks = ref.watch(tracksProvider);
   final counts = <int, int>{};
   for (final folder in folders) {
     var count = 0;

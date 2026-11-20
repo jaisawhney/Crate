@@ -1,11 +1,18 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
+import 'package:flutter/foundation.dart';
+import 'package:ml_linalg/matrix.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../models/analysis_progress.dart';
+import '../../services/audio_decoder.dart';
 import '../../services/database/library_database_service.dart';
 import '../../services/database/library_folder.dart';
+import '../../services/database/moment.dart';
 import '../../services/database/track.dart';
+import '../../services/sonic_embed.dart';
 
 class LibraryRepository {
   static const _audioExtensions = {
@@ -18,8 +25,20 @@ class LibraryRepository {
   };
 
   final LibraryDatabaseService _database;
+  final AudioDecoder _decoder;
+  final SonicEmbed _sonicEmbed;
 
-  LibraryRepository({required this._database});
+  final _analysisProgress = StreamController<AnalysisProgress?>.broadcast();
+  var _refreshing = false;
+  var _refreshAgain = false;
+
+  LibraryRepository({
+    required this._database,
+    required this._decoder,
+    required this._sonicEmbed,
+  });
+
+  Stream<AnalysisProgress?> watchAnalysisProgress() => _analysisProgress.stream;
 
   List<LibraryFolder> loadFolders() => _database.loadFolders();
 
@@ -31,7 +50,24 @@ class LibraryRepository {
 
   List<Track> loadTracks() => _database.loadTracks();
 
-  Future<void> refresh() => _sync();
+  Future<void> refresh() async {
+    if (_refreshing) {
+      _refreshAgain = true;
+      return;
+    }
+
+    _refreshing = true;
+    try {
+      do {
+        _refreshAgain = false;
+        await _sync();
+        await _embedTracks();
+      } while (_refreshAgain);
+    } finally {
+      _refreshing = false;
+      _analysisProgress.add(null);
+    }
+  }
 
   Future<void> _sync() async {
     final tracksByPath = {
@@ -67,6 +103,42 @@ class LibraryRepository {
 
     _database.saveTracks(changed);
     _database.removeTracks(removed);
+    _database.removeMoments([
+      ...removed,
+      for (final track in changed)
+        if (track.embedding == null) track.id,
+    ]);
+  }
+
+  Future<void> _embedTracks() async {
+    final tracks = _database.loadTracksWithoutEmbedding();
+    for (var idx = 0; idx < tracks.length; idx++) {
+      _analysisProgress.add(AnalysisProgress(idx, tracks.length));
+      final track = tracks[idx];
+      final windows = await _embedWindows(track);
+      if (windows == null) continue;
+
+      track.embedding = Matrix.fromList(windows).mean().normalize().toList();
+      _database.saveTrack(track);
+      _database.removeMoments([track.id]);
+      _database.saveMoments([
+        for (var window = 0; window < windows.length; window++)
+          Moment(
+            trackId: track.id,
+            startSeconds: window * SonicEmbed.windowSeconds,
+            embedding: windows[window],
+          ),
+      ]);
+    }
+  }
+
+  Future<List<Float32List>?> _embedWindows(Track track) async {
+    try {
+      final samples = await _decoder.decode(track.path);
+      return await _sonicEmbed.embedWindows(samples);
+    } catch (_) {
+      return null;
+    }
   }
 
   bool _hasChanged(Track track, FileStat stat) {
@@ -77,7 +149,7 @@ class LibraryRepository {
 
   Track _readTrack(File file, FileStat stat, Track? existing) {
     final metadata = _readMetadata(file);
-    return Track(
+    final track = Track(
       id: existing?.id ?? 0,
       path: file.path,
       size: stat.size,
@@ -88,6 +160,13 @@ class LibraryRepository {
       durationMilliseconds: metadata?.duration?.inMilliseconds,
       genres: _splitGenres(metadata?.genres ?? const []),
     );
+
+    // a retag changes the file but not the audio, so the same length keeps it
+    final duration = track.durationMilliseconds;
+    if (duration != null && duration == existing?.durationMilliseconds) {
+      track.embedding = existing?.embedding;
+    }
+    return track;
   }
 
   // id3 separates genres with nulls, and m4a genres arrive with raw atom headers

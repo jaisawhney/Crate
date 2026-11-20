@@ -13,7 +13,7 @@ class LibraryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final songs = ref.watch(libraryTracksProvider).length;
+    final songs = ref.watch(tracksProvider).length;
     final length = ref.watch(libraryLengthProvider);
     final library = ref.read(libraryProvider.notifier);
 
@@ -64,7 +64,7 @@ class _Folders extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final folders = ref.watch(libraryFoldersProvider);
+    final folders = ref.watch(libraryFoldersProvider).value ?? const [];
     final counts = ref.watch(folderSongCountsProvider);
     final library = ref.read(libraryProvider.notifier);
 
@@ -129,7 +129,7 @@ class _Songs extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final tracks = ref.watch(foundTracksProvider);
-    final total = ref.watch(libraryTracksProvider).length;
+    final total = ref.watch(tracksProvider).length;
 
     var subtitle = 'Titles, artists and genres from your tags';
     if (tracks.length < total) subtitle = '${tracks.length} of $total songs';
