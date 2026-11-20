@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'config/dependencies.dart';
+import 'data/services/audio_decoder.dart';
 import 'data/services/database/library_database_service.dart';
 
 Future<void> main() async {
@@ -14,12 +15,16 @@ Future<void> main() async {
   );
 
   final database = await LibraryDatabaseService.open();
+  final decoder = await AudioDecoder.load();
 
   runApp(
     ProviderScope(
       // riverpod retries failed providers for ~40 s by default, hiding a failed download behind a spinner
       retry: (retryCount, error) => null,
-      overrides: [libraryDatabaseServiceProvider.overrideWithValue(database)],
+      overrides: [
+        libraryDatabaseServiceProvider.overrideWithValue(database),
+        audioDecoderProvider.overrideWithValue(decoder),
+      ],
       child: const CrateApp(),
     ),
   );

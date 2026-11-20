@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/dependencies.dart';
 
 final libraryReadyProvider = FutureProvider((ref) async {
-  await ref.watch(sonicEmbedProvider.future);
+  await ref.watch(libraryRepositoryProvider.future);
 });
 
 final downloadProgressProvider = Provider(

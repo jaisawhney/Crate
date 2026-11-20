@@ -37,7 +37,10 @@ class HomeShell extends ConsumerWidget {
       );
     }
 
-    final folders = ref.watch(libraryFoldersProvider);
+    final folders = ref.watch(libraryFoldersProvider).value;
+    if (folders == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (folders.isEmpty) {
       return EmptyState(
         icon: Icons.library_music_outlined,
