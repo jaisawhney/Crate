@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../models/model_download_progress.dart';
@@ -20,8 +21,8 @@ class ModelDownloadService {
   Stream<ModelDownloadProgress> watchProgress() => _progress.stream;
 
   Future<File> download() async {
-    final cache = await getApplicationCacheDirectory();
-    final bundle = File('${cache.path}/SonicEmbed-LiteRT/$_path');
+    final support = await getApplicationSupportDirectory();
+    final bundle = File(p.join(support.path, 'models', p.basename(_path)));
     if (await bundle.exists()) return bundle;
 
     final partial = File('${bundle.path}.part');

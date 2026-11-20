@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/library_notifier.dart';
 import '../../core/ui/empty_state.dart';
 import '../../library/widgets/library_screen.dart';
+import '../view_models/shell_view_model.dart';
+import 'model_download_card.dart';
 import 'sidebar.dart';
 
 class HomeShell extends ConsumerWidget {
@@ -22,6 +24,19 @@ class HomeShell extends ConsumerWidget {
   }
 
   Widget _body(WidgetRef ref) {
+    final ready = ref.watch(libraryReadyProvider);
+    if (ready.isLoading) return _loading(ref);
+    if (ready.hasError) {
+      return EmptyState(
+        title: 'Failed to load model',
+        message: '${ready.error}',
+        action: FilledButton(
+          onPressed: ref.read(shellViewModelProvider.notifier).retry,
+          child: const Text('Retry'),
+        ),
+      );
+    }
+
     final folders = ref.watch(libraryFoldersProvider);
     if (folders.isEmpty) {
       return EmptyState(
@@ -36,5 +51,14 @@ class HomeShell extends ConsumerWidget {
     }
 
     return const LibraryScreen();
+  }
+
+  Widget _loading(WidgetRef ref) {
+    final progress = ref.watch(downloadProgressProvider);
+    if (progress == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return ModelDownloadCard(progress: progress);
   }
 }
