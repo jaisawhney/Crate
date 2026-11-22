@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/library_notifier.dart';
 import '../../core/ui/empty_state.dart';
 import '../../discover/widgets/discover_screen.dart';
+import '../../discover/widgets/now_playing_bar.dart';
 import '../../library/widgets/library_screen.dart';
 import '../view_models/shell_view_model.dart';
 import 'model_download_card.dart';
@@ -64,9 +65,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       );
     }
 
-    return IndexedStack(
-      index: _index,
-      children: const [DiscoverScreen(), LibraryScreen()],
+    return Column(
+      children: [
+        Expanded(
+          child: IndexedStack(
+            index: _index,
+            children: const [DiscoverScreen(), LibraryScreen()],
+          ),
+        ),
+        const NowPlayingBar(),
+      ],
     );
   }
 

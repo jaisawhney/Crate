@@ -2,9 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/library_notifier.dart';
+import '../../../domain/playback_notifier.dart';
 import '../../../utils/format.dart';
 import '../../core/ui/empty_state.dart';
 import '../../core/ui/panel.dart';
+import '../../core/ui/song_tile.dart';
 import '../view_models/discover_view_model.dart';
 
 class ResultsPanel extends ConsumerWidget {
@@ -27,8 +29,8 @@ class ResultsPanel extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               'Describe what you want to hear, like a quiet piano intro or a '
-              'crowd cheering, and find the part of each song that sounds '
-              'like it.',
+              'crowd cheering, and jump straight to the part of each song '
+              'that sounds like it.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),
@@ -37,7 +39,7 @@ class ResultsPanel extends ConsumerWidget {
       );
     }
 
-    var subtitle = 'Each song with the part that fits best';
+    var subtitle = 'Each song plays from the part that fits best';
     if (analyzing) subtitle = _partial;
     return Panel(
       title: 'Matches',
@@ -47,7 +49,8 @@ class ResultsPanel extends ConsumerWidget {
   }
 
   Widget _matches(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final viewModel = ref.read(discoverViewModelProvider.notifier);
+    final playback = ref.watch(playbackProvider);
     final search = ref.watch(searchResultsProvider);
 
     return search.when(
@@ -57,24 +60,13 @@ class ResultsPanel extends ConsumerWidget {
         itemBuilder: (context, idx) {
           final result = results[idx];
           final track = result.track;
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            title: Text(
-              track.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall,
-            ),
-            subtitle: Text(
-              byline(track.artist, track.genres),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall,
-            ),
-            trailing: Text(
-              'at ${formatDuration(result.start)}',
-              style: theme.textTheme.labelMedium,
-            ),
+          return SongTile(
+            title: track.title,
+            subtitle: byline(track.artist, track.genres),
+            detail: 'at ${formatDuration(result.start)}',
+            selected: playback.isCurrent(track),
+            playing: playback.isPlaying(track),
+            onPlay: () => viewModel.playOrPause(result),
           );
         },
       ),

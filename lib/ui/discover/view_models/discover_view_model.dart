@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/dependencies.dart';
 import '../../../domain/library_notifier.dart';
+import '../../../domain/playback_notifier.dart';
 import '../../../models/search_result.dart';
 
 final queryProvider = NotifierProvider(() => _Value(''));
@@ -14,6 +15,16 @@ class DiscoverViewModel extends Notifier<void> {
 
   void search(String query) {
     ref.read(queryProvider.notifier).set(query.trim());
+  }
+
+  void play(SearchResult result) =>
+      ref.read(playbackProvider.notifier).playFrom(result.track, result.start);
+
+  void playOrPause(SearchResult result) {
+    if (!ref.read(playbackProvider).isCurrent(result.track)) {
+      return play(result);
+    }
+    ref.read(playbackProvider.notifier).toggle(result.track);
   }
 }
 
