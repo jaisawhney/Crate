@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../models/analysis_progress.dart';
 import '../../../models/search_result.dart';
+import '../../../utils/waveform.dart';
 import '../../services/audio_decoder.dart';
 import '../../services/database/library_database_service.dart';
 import '../../services/database/library_folder.dart';
@@ -77,6 +78,20 @@ class LibraryRepository {
     final moments = _loadMoments();
     if (moments.trackIds.isEmpty) return const [];
     return _bestMoments(moments, _Moments.score(moments.originals, query));
+  }
+
+  Uint8List? loadCover(Track track) {
+    try {
+      final metadata = readMetadata(File(track.path), getImage: true);
+      return metadata.pictures.firstOrNull?.bytes;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<List<double>> loadWaveform(Track track) async {
+    final samples = await _decoder.decode(track.path);
+    return waveform(samples, 600);
   }
 
   _Moments _loadMoments() =>

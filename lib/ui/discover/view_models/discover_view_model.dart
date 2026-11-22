@@ -45,6 +45,22 @@ final searchResultsProvider = FutureProvider.autoDispose((ref) async {
   return library.searchText(embedding);
 });
 
+final coverProvider = FutureProvider.autoDispose((ref) async {
+  final track = ref.watch(currentTrackProvider);
+  if (track == null) return null;
+
+  final library = await ref.watch(libraryRepositoryProvider.future);
+  return library.loadCover(track);
+});
+
+final waveformProvider = FutureProvider.autoDispose((ref) async {
+  final track = ref.watch(currentTrackProvider);
+  if (track == null) return const <double>[];
+
+  final library = await ref.watch(libraryRepositoryProvider.future);
+  return library.loadWaveform(track);
+});
+
 class _Value<T> extends Notifier<T> {
   final T _initial;
 

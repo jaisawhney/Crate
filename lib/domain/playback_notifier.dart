@@ -19,6 +19,13 @@ final durationProvider = StreamProvider(
   (ref) => ref.watch(playerRepositoryProvider).watchDuration(),
 );
 
+final progressProvider = Provider((ref) {
+  final position = ref.watch(positionProvider).value ?? Duration.zero;
+  final duration = ref.watch(durationProvider).value;
+  if (duration == null || duration == Duration.zero) return 0.0;
+  return (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
+});
+
 class PlaybackNotifier extends Notifier<PlaybackState> {
   late PlayerRepository _player;
 
@@ -52,6 +59,13 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
     }
     state = PlaybackState(track: track, playing: true);
     _player.play();
+  }
+
+  // a drag past either end of the waveform asks for a spot outside the song
+  Future<void> seek(double fraction) async {
+    final duration = ref.read(durationProvider).value;
+    if (duration == null) return;
+    await _player.seek(duration * fraction.clamp(0.0, 1.0));
   }
 
   Future<void> _finish() async {
