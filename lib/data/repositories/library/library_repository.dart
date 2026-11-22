@@ -7,6 +7,7 @@ import 'package:ml_linalg/matrix.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../models/analysis_progress.dart';
+import '../../../models/search_result.dart';
 import '../../services/audio_decoder.dart';
 import '../../services/database/library_database_service.dart';
 import '../../services/database/library_folder.dart';
@@ -31,6 +32,7 @@ class LibraryRepository {
   final _analysisProgress = StreamController<AnalysisProgress?>.broadcast();
   var _refreshing = false;
   var _refreshAgain = false;
+  _Moments? _moments;
 
   LibraryRepository({
     required this._database,
@@ -67,6 +69,38 @@ class LibraryRepository {
       _refreshing = false;
       _analysisProgress.add(null);
     }
+  }
+
+  Future<Float32List> embedQuery(String query) => _sonicEmbed.embedQuery(query);
+
+  List<SearchResult> searchText(List<double> query) {
+    final moments = _loadMoments();
+    if (moments.trackIds.isEmpty) return const [];
+    return _bestMoments(moments, _Moments.score(moments.originals, query));
+  }
+
+  _Moments _loadMoments() =>
+      _moments ??= _Moments.load(_database.loadAllMoments());
+
+  List<SearchResult> _bestMoments(_Moments moments, List<double> scores) {
+    final bestRowOf = <int, int>{};
+    for (var row = 0; row < scores.length; row++) {
+      final trackId = moments.trackIds[row];
+      final best = bestRowOf[trackId];
+      if (best != null && scores[best] >= scores[row]) continue;
+      bestRowOf[trackId] = row;
+    }
+
+    final results = <SearchResult>[];
+    final tracks = _database.loadTracksById(bestRowOf.keys.toList());
+    for (final track in tracks) {
+      if (track == null) continue;
+      final row = bestRowOf[track.id]!;
+      final start = Duration(seconds: moments.starts[row]);
+      results.add(SearchResult(track, start, scores[row]));
+    }
+    results.sort((a, b) => b.score.compareTo(a.score));
+    return results;
   }
 
   Future<void> _sync() async {
@@ -108,6 +142,7 @@ class LibraryRepository {
       for (final track in changed)
         if (track.embedding == null) track.id,
     ]);
+    _moments = null;
   }
 
   Future<void> _embedTracks() async {
@@ -129,6 +164,7 @@ class LibraryRepository {
             embedding: windows[window],
           ),
       ]);
+      _moments = null;
     }
   }
 
@@ -188,5 +224,29 @@ class LibraryRepository {
     } catch (_) {
       return null;
     }
+  }
+}
+
+class _Moments {
+  final List<int> trackIds;
+  final List<int> starts;
+  final Matrix originals;
+
+  _Moments(this.trackIds, this.starts, this.originals);
+
+  static _Moments load(List<Moment> moments) {
+    if (moments.isEmpty) return _Moments(const [], const [], Matrix.empty());
+
+    return _Moments(
+      [for (final moment in moments) moment.trackId],
+      [for (final moment in moments) moment.startSeconds],
+      Matrix.fromList([for (final moment in moments) moment.embedding]),
+    );
+  }
+
+  // rows are unit length, so a dot product is the cosine similarity
+  static List<double> score(Matrix windows, List<double> query) {
+    final column = windows * Matrix.column(query);
+    return column.getColumn(0).toList();
   }
 }

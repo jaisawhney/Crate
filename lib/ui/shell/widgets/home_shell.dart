@@ -3,29 +3,40 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/library_notifier.dart';
 import '../../core/ui/empty_state.dart';
+import '../../discover/widgets/discover_screen.dart';
 import '../../library/widgets/library_screen.dart';
 import '../view_models/shell_view_model.dart';
 import 'model_download_card.dart';
 import 'sidebar.dart';
 
-class HomeShell extends ConsumerWidget {
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends ConsumerState<HomeShell> {
+  var _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
         children: [
-          const Sidebar(),
-          Expanded(child: _body(ref)),
+          Sidebar(
+            index: _index,
+            onSelect: (idx) => setState(() => _index = idx),
+          ),
+          Expanded(child: _body()),
         ],
       ),
     );
   }
 
-  Widget _body(WidgetRef ref) {
+  Widget _body() {
     final ready = ref.watch(libraryReadyProvider);
-    if (ready.isLoading) return _loading(ref);
+    if (ready.isLoading) return _loading();
     if (ready.hasError) {
       return EmptyState(
         title: 'Failed to load model',
@@ -53,10 +64,13 @@ class HomeShell extends ConsumerWidget {
       );
     }
 
-    return const LibraryScreen();
+    return IndexedStack(
+      index: _index,
+      children: const [DiscoverScreen(), LibraryScreen()],
+    );
   }
 
-  Widget _loading(WidgetRef ref) {
+  Widget _loading() {
     final progress = ref.watch(downloadProgressProvider);
     if (progress == null) {
       return const Center(child: CircularProgressIndicator());

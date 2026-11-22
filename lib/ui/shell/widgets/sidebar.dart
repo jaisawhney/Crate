@@ -5,14 +5,18 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../domain/library_notifier.dart';
 
 class Sidebar extends StatelessWidget {
-  const Sidebar({super.key});
+  final int index;
+  final ValueChanged<int> onSelect;
+
+  const Sidebar({super.key, required this.index, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return NavigationDrawer(
-      selectedIndex: 0,
+      selectedIndex: index,
+      onDestinationSelected: onSelect,
       header: Padding(
         padding: const EdgeInsets.fromLTRB(28, 24, 16, 24),
         child: Column(
@@ -30,6 +34,10 @@ class Sidebar extends StatelessWidget {
       ),
       footer: const _AnalysisStatus(),
       children: const [
+        NavigationDrawerDestination(
+          icon: Icon(Icons.explore_outlined),
+          label: Text('Discover'),
+        ),
         NavigationDrawerDestination(
           icon: Icon(Icons.library_music_outlined),
           label: Text('Library'),
