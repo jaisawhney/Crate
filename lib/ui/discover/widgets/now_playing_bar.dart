@@ -21,6 +21,7 @@ class NowPlayingBar extends ConsumerWidget {
       playbackProvider.select((state) => state.playing),
     );
     final playback = ref.read(playbackProvider.notifier);
+    final viewModel = ref.read(discoverViewModelProvider.notifier);
     final scores = ref.watch(momentScoresProvider).value ?? const [];
 
     var icon = Icons.play_arrow_rounded;
@@ -80,6 +81,15 @@ class NowPlayingBar extends ConsumerWidget {
             ),
             const SizedBox(width: 12),
             const _Time(),
+            const SizedBox(width: 16),
+            Tooltip(
+              message: 'Find songs that sound like the part playing now',
+              child: TextButton.icon(
+                icon: const Icon(Icons.radar),
+                label: const Text('Find similar songs'),
+                onPressed: viewModel.searchLikeNow,
+              ),
+            ),
           ],
         ),
       ),

@@ -19,6 +19,22 @@ class ResultsPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final analyzing = ref.watch(analyzingProvider);
+    final moment = ref.watch(momentQueryProvider);
+    if (moment != null) {
+      var subtitle =
+          'Songs that sound like it around ${formatDuration(moment.start)}';
+      if (analyzing) subtitle = _partial;
+      return Panel(
+        title: 'Similar to ${moment.track.title}',
+        subtitle: subtitle,
+        trailing: TextButton(
+          onPressed: ref.read(discoverViewModelProvider.notifier).clearMoment,
+          child: const Text('Back'),
+        ),
+        child: _matches(context, ref),
+      );
+    }
+
     final query = ref.watch(queryProvider);
     if (query.isEmpty) {
       return Panel(

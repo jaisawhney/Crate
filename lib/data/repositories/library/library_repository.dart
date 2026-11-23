@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +10,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../models/analysis_progress.dart';
 import '../../../models/search_result.dart';
+import '../../../models/song_moment.dart';
 import '../../../utils/waveform.dart';
 import '../../services/audio_decoder.dart';
 import '../../services/database/library_database_service.dart';
@@ -75,10 +77,25 @@ class LibraryRepository {
 
   Future<Float32List> embedQuery(String query) => _sonicEmbed.embedQuery(query);
 
+  // text matches got worse against centered windows, so it uses the originals
   List<SearchResult> searchText(List<double> query) {
     final moments = _loadMoments();
     if (moments.trackIds.isEmpty) return const [];
     return _bestMoments(moments, _Moments.score(moments.originals, query));
+  }
+
+  // a moment's own song always matches it best, so it's left out
+  List<SearchResult> searchLike(SongMoment moment) {
+    final moments = _loadMoments();
+    final row = moments.rowAt(moment.track.id, moment.start);
+    if (row == null) return const [];
+
+    final query = moments.centered[row].toList();
+    final scores = _Moments.score(moments.centered, query);
+    return [
+      for (final result in _bestMoments(moments, scores))
+        if (result.track.id != moment.track.id) result,
+    ];
   }
 
   List<double> textScores(Track track, List<double> query) {
@@ -87,6 +104,17 @@ class LibraryRepository {
     return [
       for (final row in moments.rowsOf(track.id))
         moments.originals[row].dot(vector),
+    ];
+  }
+
+  List<double> likeScores(Track track, SongMoment moment) {
+    final moments = _loadMoments();
+    final source = moments.rowAt(moment.track.id, moment.start);
+    if (source == null) return const [];
+
+    return [
+      for (final row in moments.rowsOf(track.id))
+        moments.centered[row].dot(moments.centered[source]),
     ];
   }
 
@@ -257,6 +285,8 @@ class _Moments {
   final List<int> starts;
   final Matrix originals;
 
+  late final centered = _center();
+
   _Moments(this.trackIds, this.starts, this.originals);
 
   static _Moments load(List<Moment> moments) {
@@ -269,10 +299,24 @@ class _Moments {
     );
   }
 
+  Matrix _center() {
+    final mean = originals.mean();
+    return Matrix.fromRows([
+      for (final window in originals.rows) (window - mean).normalize(),
+    ]);
+  }
+
   List<int> rowsOf(int trackId) => [
     for (var row = 0; row < trackIds.length; row++)
       if (trackIds[row] == trackId) row,
   ];
+
+  int? rowAt(int trackId, Duration position) {
+    final rows = rowsOf(trackId);
+    if (rows.isEmpty) return null;
+    final window = position.inSeconds ~/ SonicEmbed.windowSeconds;
+    return rows[min(window, rows.length - 1)];
+  }
 
   // rows are unit length, so a dot product is the cosine similarity
   static List<double> score(Matrix windows, List<double> query) {
