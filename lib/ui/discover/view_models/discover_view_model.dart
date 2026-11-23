@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/dependencies.dart';
@@ -26,6 +28,15 @@ class DiscoverViewModel extends Notifier<void> {
     }
     ref.read(playbackProvider.notifier).toggle(result.track);
   }
+
+  static List<double> _rescale(List<double> scores) {
+    if (scores.isEmpty) return scores;
+
+    final lowest = scores.reduce(min);
+    final highest = scores.reduce(max);
+    if (highest == lowest) return List.filled(scores.length, 1);
+    return [for (final score in scores) (score - lowest) / (highest - lowest)];
+  }
 }
 
 final queryEmbeddingProvider = FutureProvider.autoDispose((ref) async {
@@ -43,6 +54,16 @@ final searchResultsProvider = FutureProvider.autoDispose((ref) async {
 
   if (embedding == null) return const <SearchResult>[];
   return library.searchText(embedding);
+});
+
+final momentScoresProvider = FutureProvider.autoDispose((ref) async {
+  final track = ref.watch(currentTrackProvider);
+  final embedding = await ref.watch(queryEmbeddingProvider.future);
+  if (track == null) return const <double>[];
+
+  final library = await ref.watch(libraryRepositoryProvider.future);
+  if (embedding == null) return const <double>[];
+  return DiscoverViewModel._rescale(library.textScores(track, embedding));
 });
 
 final coverProvider = FutureProvider.autoDispose((ref) async {

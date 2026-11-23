@@ -1,16 +1,40 @@
 import 'package:material_ui/material_ui.dart';
 
+class AppColors extends ThemeExtension<AppColors> {
+  final Color accentWarm;
+
+  const AppColors({required this.accentWarm});
+
+  static AppColors of(BuildContext context) =>
+      Theme.of(context).extension<AppColors>()!;
+
+  @override
+  AppColors copyWith({Color? accentWarm}) {
+    return AppColors(accentWarm: accentWarm ?? this.accentWarm);
+  }
+
+  @override
+  AppColors lerp(AppColors? other, double t) {
+    if (other == null) return this;
+    return AppColors(accentWarm: Color.lerp(accentWarm, other.accentWarm, t)!);
+  }
+}
+
 ThemeData buildAppTheme(Brightness brightness) {
   final scheme = ColorScheme.fromSeed(
     seedColor: const Color(0xFF8B6CEF),
     brightness: brightness,
   );
+  // the bright amber fades into light backgrounds
+  var warm = const Color(0xFFAE7015);
+  if (brightness == Brightness.dark) warm = const Color(0xFFE8A33D);
   final base = ThemeData(colorScheme: scheme);
   final border = BorderSide(
     color: scheme.outlineVariant.withValues(alpha: 0.5),
   );
 
   return base.copyWith(
+    extensions: [AppColors(accentWarm: warm)],
     scaffoldBackgroundColor: scheme.surface,
     dividerColor: border.color,
     textTheme: base.textTheme.copyWith(

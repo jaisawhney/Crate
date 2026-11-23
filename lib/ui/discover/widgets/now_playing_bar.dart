@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/playback_notifier.dart';
 import '../../../utils/format.dart';
+import '../../core/themes/theme.dart';
 import '../view_models/discover_view_model.dart';
 
 class NowPlayingBar extends ConsumerWidget {
@@ -20,6 +21,7 @@ class NowPlayingBar extends ConsumerWidget {
       playbackProvider.select((state) => state.playing),
     );
     final playback = ref.read(playbackProvider.notifier);
+    final scores = ref.watch(momentScoresProvider).value ?? const [];
 
     var icon = Icons.play_arrow_rounded;
     var tooltip = 'Play';
@@ -62,7 +64,20 @@ class NowPlayingBar extends ConsumerWidget {
               onPressed: () => playback.toggle(track),
             ),
             const SizedBox(width: 16),
-            const Expanded(child: _Timeline()),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _Timeline(),
+                  if (scores.isNotEmpty)
+                    Text(
+                      'Amber shows where this song matches best',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
             const SizedBox(width: 12),
             const _Time(),
           ],
@@ -117,8 +132,11 @@ class _Timeline extends ConsumerWidget {
           size: const Size(double.infinity, 44),
           painter: _TimelinePainter(
             levels: ref.watch(waveformProvider).value ?? const [],
+            momentScores: ref.watch(momentScoresProvider).value ?? const [],
             progress: ref.watch(progressProvider),
-            color: colors.primary,
+            plain: colors.primary,
+            cold: colors.outlineVariant,
+            hot: AppColors.of(context).accentWarm,
             playhead: colors.onSurface,
           ),
         ),
@@ -129,14 +147,20 @@ class _Timeline extends ConsumerWidget {
 
 class _TimelinePainter extends CustomPainter {
   final List<double> levels;
+  final List<double> momentScores;
   final double progress;
-  final Color color;
+  final Color plain;
+  final Color cold;
+  final Color hot;
   final Color playhead;
 
   _TimelinePainter({
     required this.levels,
+    required this.momentScores,
     required this.progress,
-    required this.color,
+    required this.plain,
+    required this.cold,
+    required this.hot,
     required this.playhead,
   });
 
@@ -144,17 +168,19 @@ class _TimelinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // bars keep their width, so a wider player shows more of them
     final bars = min(size.width ~/ 5, levels.length);
+    final heat = _heat(bars);
     final step = size.width / bars;
     final paint = Paint()
       ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..color = color;
+      ..strokeCap = StrokeCap.round;
     for (var bar = 0; bar < bars; bar++) {
       final start = bar * levels.length ~/ bars;
       final end = (bar + 1) * levels.length ~/ bars;
       final level = levels.sublist(start, end).reduce(max);
       final height = (level * size.height).clamp(2.0, size.height);
       final x = step * (bar + 0.5);
+      paint.color = plain;
+      if (heat.isNotEmpty) paint.color = Color.lerp(cold, hot, heat[bar])!;
       canvas.drawLine(
         Offset(x, (size.height - height) / 2),
         Offset(x, (size.height + height) / 2),
@@ -170,6 +196,17 @@ class _TimelinePainter extends CustomPainter {
         ..color = playhead
         ..strokeWidth = 2,
     );
+  }
+
+  List<double> _heat(int bars) {
+    if (momentScores.isEmpty) return const [];
+
+    final heat = <double>[];
+    for (var bar = 0; bar < bars; bar++) {
+      final share = momentScores[bar * momentScores.length ~/ bars];
+      heat.add(share * share);
+    }
+    return heat;
   }
 
   @override

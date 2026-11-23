@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/foundation.dart';
 import 'package:ml_linalg/matrix.dart';
+import 'package:ml_linalg/vector.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../models/analysis_progress.dart';
@@ -78,6 +79,15 @@ class LibraryRepository {
     final moments = _loadMoments();
     if (moments.trackIds.isEmpty) return const [];
     return _bestMoments(moments, _Moments.score(moments.originals, query));
+  }
+
+  List<double> textScores(Track track, List<double> query) {
+    final moments = _loadMoments();
+    final vector = Vector.fromList(query);
+    return [
+      for (final row in moments.rowsOf(track.id))
+        moments.originals[row].dot(vector),
+    ];
   }
 
   Uint8List? loadCover(Track track) {
@@ -258,6 +268,11 @@ class _Moments {
       Matrix.fromList([for (final moment in moments) moment.embedding]),
     );
   }
+
+  List<int> rowsOf(int trackId) => [
+    for (var row = 0; row < trackIds.length; row++)
+      if (trackIds[row] == trackId) row,
+  ];
 
   // rows are unit length, so a dot product is the cosine similarity
   static List<double> score(Matrix windows, List<double> query) {
