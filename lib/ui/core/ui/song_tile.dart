@@ -5,6 +5,7 @@ class SongTile extends StatelessWidget {
   final String subtitle;
   final String? detail;
   final bool selected;
+  final bool highlighted;
   final bool playing;
   final VoidCallback onPlay;
 
@@ -14,6 +15,7 @@ class SongTile extends StatelessWidget {
     required this.subtitle,
     this.detail,
     required this.selected,
+    this.highlighted = false,
     required this.playing,
     required this.onPlay,
   });
@@ -29,8 +31,11 @@ class SongTile extends StatelessWidget {
       icon = Icons.pause_rounded;
       tooltip = 'Pause';
     }
+    Color? background;
+    if (highlighted) background = theme.colorScheme.surfaceContainerHigh;
     return ListTile(
       selected: selected,
+      tileColor: background,
       contentPadding: const EdgeInsets.only(left: 12, right: 4),
       title: Text(
         title,

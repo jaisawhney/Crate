@@ -9,8 +9,10 @@ import 'package:ml_linalg/vector.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../models/analysis_progress.dart';
+import '../../../models/map_point.dart';
 import '../../../models/search_result.dart';
 import '../../../models/song_moment.dart';
+import '../../../utils/tsne.dart';
 import '../../../utils/waveform.dart';
 import '../../services/audio_decoder.dart';
 import '../../services/database/library_database_service.dart';
@@ -37,6 +39,7 @@ class LibraryRepository {
   var _refreshing = false;
   var _refreshAgain = false;
   _Moments? _moments;
+  Future<List<MapPoint>>? _musicMap;
 
   LibraryRepository({
     required this._database,
@@ -118,6 +121,26 @@ class LibraryRepository {
     ];
   }
 
+  Future<List<MapPoint>> loadMusicMap() => _musicMap ??= _buildMusicMap();
+
+  Future<List<MapPoint>> _buildMusicMap() async {
+    final tracks = _database.loadTracksWithEmbedding();
+    if (tracks.length < 2) return const [];
+
+    final songs = Matrix.fromList([
+      for (final track in tracks) track.embedding!,
+    ]);
+    final mean = songs.mean();
+    final centered = [
+      for (final song in songs.rows) (song - mean).normalize().toList(),
+    ];
+    final positions = await compute(Tsne.run, centered);
+    return [
+      for (var idx = 0; idx < tracks.length; idx++)
+        MapPoint(tracks[idx], positions[idx].x, positions[idx].y),
+    ];
+  }
+
   Uint8List? loadCover(Track track) {
     try {
       final metadata = readMetadata(File(track.path), getImage: true);
@@ -196,6 +219,7 @@ class LibraryRepository {
         if (track.embedding == null) track.id,
     ]);
     _moments = null;
+    _musicMap = null;
   }
 
   Future<void> _embedTracks() async {
@@ -218,6 +242,7 @@ class LibraryRepository {
           ),
       ]);
       _moments = null;
+      _musicMap = null;
     }
   }
 

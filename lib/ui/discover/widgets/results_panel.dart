@@ -67,6 +67,7 @@ class ResultsPanel extends ConsumerWidget {
   Widget _matches(BuildContext context, WidgetRef ref) {
     final viewModel = ref.read(discoverViewModelProvider.notifier);
     final playback = ref.watch(playbackProvider);
+    final highlighted = ref.watch(highlightProvider);
     final search = ref.watch(searchResultsProvider);
 
     return search.when(
@@ -76,13 +77,18 @@ class ResultsPanel extends ConsumerWidget {
         itemBuilder: (context, idx) {
           final result = results[idx];
           final track = result.track;
-          return SongTile(
-            title: track.title,
-            subtitle: byline(track.artist, track.genres),
-            detail: 'at ${formatDuration(result.start)}',
-            selected: playback.isCurrent(track),
-            playing: playback.isPlaying(track),
-            onPlay: () => viewModel.playOrPause(result),
+          return MouseRegion(
+            onEnter: (event) => viewModel.highlight(track.id),
+            onExit: (event) => viewModel.highlight(null),
+            child: SongTile(
+              title: track.title,
+              subtitle: byline(track.artist, track.genres),
+              detail: 'at ${formatDuration(result.start)}',
+              selected: playback.isCurrent(track),
+              highlighted: highlighted == track.id,
+              playing: playback.isPlaying(track),
+              onPlay: () => viewModel.playOrPause(result),
+            ),
           );
         },
       ),
