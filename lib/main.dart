@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_edge_ai/flutter_edge_ai.dart' show FlutterEdgeAi;
 import 'package:flutter_edge_ai_litertlm/flutter_edge_ai_litertlm.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 
 import 'app.dart';
 import 'config/dependencies.dart';
@@ -10,6 +11,7 @@ import 'data/services/database/library_database_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  JustAudioMediaKit.ensureInitialized();
   await FlutterEdgeAi.initialize(
     embeddingBackends: const [LiteRtEmbeddingBackend()],
   );

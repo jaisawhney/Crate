@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../domain/library_notifier.dart';
+import '../../../domain/playback_notifier.dart';
 import '../../../utils/format.dart';
 import '../../core/ui/page_header.dart';
 import '../../core/ui/panel.dart';
+import '../../core/ui/song_tile.dart';
 import '../view_models/library_view_model.dart';
 
 class LibraryScreen extends ConsumerWidget {
@@ -127,11 +129,12 @@ class _Songs extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final tracks = ref.watch(foundTracksProvider);
     final total = ref.watch(tracksProvider).length;
+    final playback = ref.read(playbackProvider.notifier);
+    final playbackState = ref.watch(playbackProvider);
 
-    var subtitle = 'Titles, artists and genres from your tags';
+    var subtitle = 'Tap a song to play it from the start';
     if (tracks.length < total) subtitle = '${tracks.length} of $total songs';
     return Panel(
       title: 'Songs',
@@ -142,28 +145,15 @@ class _Songs extends ConsumerWidget {
         itemBuilder: (context, idx) {
           final track = tracks[idx];
           final duration = track.duration;
-          Widget? length;
-          if (duration != null) {
-            length = Text(
-              formatDuration(duration),
-              style: theme.textTheme.labelMedium,
-            );
-          }
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            title: Text(
-              track.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall,
-            ),
-            subtitle: Text(
-              byline(track.artist, track.genres),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall,
-            ),
-            trailing: length,
+          String? length;
+          if (duration != null) length = formatDuration(duration);
+          return SongTile(
+            title: track.title,
+            subtitle: byline(track.artist, track.genres),
+            detail: length,
+            selected: playbackState.isCurrent(track),
+            playing: playbackState.isPlaying(track),
+            onPlay: () => playback.toggle(track),
           );
         },
       ),
