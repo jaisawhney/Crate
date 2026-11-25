@@ -22,7 +22,8 @@ class DiscoverScreen extends StatelessWidget {
               title: 'Hear what you describe',
               subtitle:
                   'Describe a sound to jump to where it happens. The map '
-                  'groups songs by how they sound.',
+                  'groups songs by how they sound, so you can see if your '
+                  'genre tags agree.',
             ),
             const SizedBox(height: 16),
             Expanded(

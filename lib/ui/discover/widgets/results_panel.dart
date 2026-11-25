@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/library_notifier.dart';
 import '../../../domain/playback_notifier.dart';
 import '../../../utils/format.dart';
+import '../../core/themes/theme.dart';
 import '../../core/ui/empty_state.dart';
 import '../../core/ui/panel.dart';
 import '../../core/ui/song_tile.dart';
 import '../view_models/discover_view_model.dart';
+import 'genre_colors.dart';
 
 class ResultsPanel extends ConsumerWidget {
   const ResultsPanel({super.key});
@@ -65,8 +67,10 @@ class ResultsPanel extends ConsumerWidget {
   }
 
   Widget _matches(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final viewModel = ref.read(discoverViewModelProvider.notifier);
     final playback = ref.watch(playbackProvider);
+    final slots = ref.watch(comparedGenresProvider);
     final highlighted = ref.watch(highlightProvider);
     final search = ref.watch(searchResultsProvider);
 
@@ -84,6 +88,7 @@ class ResultsPanel extends ConsumerWidget {
               title: track.title,
               subtitle: byline(track.artist, track.genres),
               detail: 'at ${formatDuration(result.start)}',
+              color: matchColor(colors, slots, track.genres),
               selected: playback.isCurrent(track),
               highlighted: highlighted == track.id,
               playing: playback.isPlaying(track),

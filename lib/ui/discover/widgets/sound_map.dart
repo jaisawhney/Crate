@@ -7,8 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/playback_notifier.dart';
 import '../../../models/map_point.dart';
 import '../../../utils/format.dart';
+import '../../core/themes/theme.dart';
 import '../../core/ui/empty_state.dart';
 import '../view_models/discover_view_model.dart';
+import 'genre_colors.dart';
+import 'genre_list.dart';
 
 class SoundMap extends ConsumerStatefulWidget {
   const SoundMap({super.key});
@@ -41,7 +44,14 @@ class _SoundMapState extends ConsumerState<SoundMap> {
       );
     }
 
-    return _plot(points);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(width: 210, child: GenreList()),
+        const SizedBox(width: 16),
+        Expanded(child: _plot(points)),
+      ],
+    );
   }
 
   Widget _plot(List<MapPoint> points) {
@@ -161,18 +171,19 @@ class _SoundMapState extends ConsumerState<SoundMap> {
   // fl_chart draws spots in order, so the brightest and the rings go last
   Map<ScatterSpot, MapPoint> _spots(List<MapPoint> points) {
     final theme = Theme.of(context);
-    final brightness = _brightness(points);
+    final colors = AppColors.of(context);
+    final slots = ref.watch(comparedGenresProvider);
+    final brightness = _brightness(points, slots);
     final order = List.generate(points.length, (idx) => idx)
       ..sort((a, b) => brightness[a].compareTo(brightness[b]));
 
     final spots = <ScatterSpot, MapPoint>{};
     for (final idx in order) {
       final point = points[idx];
+      final color = matchColor(colors, slots, point.track.genres);
       final dot = FlDotCirclePainter(
         radius: 3.25,
-        color: theme.colorScheme.primary.withValues(
-          alpha: 0.15 + 0.85 * brightness[idx],
-        ),
+        color: color.withValues(alpha: 0.15 + 0.85 * brightness[idx]),
         strokeColor: theme.colorScheme.surfaceContainerLowest,
         strokeWidth: 1,
       );
@@ -220,10 +231,13 @@ class _SoundMapState extends ConsumerState<SoundMap> {
     );
   }
 
-  List<double> _brightness(List<MapPoint> points) {
+  List<double> _brightness(List<MapPoint> points, List<String?> slots) {
     final matchScores = ref.watch(matchScoresProvider);
     if (matchScores.isEmpty) {
-      return List.filled(points.length, 0.7);
+      return [
+        for (final point in points)
+          if (mainSlot(slots, point.track.genres) == null) 0.35 else 0.7,
+      ];
     }
 
     final brightness = <double>[];

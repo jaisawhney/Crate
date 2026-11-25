@@ -4,6 +4,7 @@ class SongTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? detail;
+  final Color? color;
   final bool selected;
   final bool highlighted;
   final bool playing;
@@ -14,6 +15,7 @@ class SongTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.detail,
+    this.color,
     required this.selected,
     this.highlighted = false,
     required this.playing,
@@ -24,7 +26,12 @@ class SongTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final detail = this.detail;
+    final color = this.color;
 
+    Widget? leading;
+    if (color != null) {
+      leading = CircleAvatar(radius: 5, backgroundColor: color);
+    }
     var icon = Icons.play_arrow_rounded;
     var tooltip = 'Play';
     if (playing) {
@@ -37,6 +44,8 @@ class SongTile extends StatelessWidget {
       selected: selected,
       tileColor: background,
       contentPadding: const EdgeInsets.only(left: 12, right: 4),
+      leading: leading,
+      minLeadingWidth: 10,
       title: Text(
         title,
         maxLines: 1,

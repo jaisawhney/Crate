@@ -9,8 +9,16 @@ import '../../../domain/playback_notifier.dart';
 import '../../../models/search_result.dart';
 import '../../../models/song_moment.dart';
 
+const defaultGenreCount = 6;
+// one per color in the map's palette
+const maxComparedGenres = 9;
+
 final queryProvider = NotifierProvider(() => _Value(''));
 final momentQueryProvider = NotifierProvider(() => _Value<SongMoment?>(null));
+// null until the user picks genres to compare
+final genreChoiceProvider = NotifierProvider(
+  () => _Value<List<String?>?>(null),
+);
 final highlightProvider = NotifierProvider(() => _Value<int?>(null));
 
 final discoverViewModelProvider = NotifierProvider(DiscoverViewModel.new);
@@ -55,6 +63,29 @@ class DiscoverViewModel extends Notifier<void> {
     }
     ref.read(playbackProvider.notifier).playFrom(track, Duration.zero);
   }
+
+  void toggleGenre(String genre) {
+    final choice = ref.read(genreChoiceProvider.notifier);
+    final slots = [...ref.read(comparedGenresProvider)];
+    final slot = slots.indexOf(genre);
+    if (slot != -1) {
+      slots[slot] = null;
+      return choice.set(slots);
+    }
+
+    final free = slots.indexOf(null);
+    if (free != -1) {
+      slots[free] = genre;
+      return choice.set(slots);
+    }
+
+    if (slots.length >= maxComparedGenres) return;
+    choice.set([...slots, genre]);
+  }
+
+  void resetGenres() => ref.read(genreChoiceProvider.notifier).set(null);
+
+  void clearGenres() => ref.read(genreChoiceProvider.notifier).set(const []);
 
   static List<double> _rescale(List<double> scores) {
     if (scores.isEmpty) return scores;
@@ -103,6 +134,32 @@ final musicMapProvider = FutureProvider((ref) async {
   await ref.watch(libraryTracksProvider.future);
   final library = await ref.watch(libraryRepositoryProvider.future);
   return library.loadMusicMap();
+});
+
+// ties go alphabetically so the order doesn't shift between runs
+final genreCountsProvider = Provider((ref) {
+  final counts = <String, int>{};
+  for (final track in ref.watch(tracksProvider)) {
+    for (final genre in track.genres.toSet()) {
+      counts[genre] = (counts[genre] ?? 0) + 1;
+    }
+  }
+  final genres = counts.keys.toList()
+    ..sort((a, b) {
+      final byCount = counts[b]!.compareTo(counts[a]!);
+      if (byCount != 0) return byCount;
+      return a.compareTo(b);
+    });
+  return {for (final genre in genres) genre: counts[genre]!};
+});
+
+// a genre keeps its slot, and so its color, when another is unchecked
+final comparedGenresProvider = Provider((ref) {
+  final chosen = ref.watch(genreChoiceProvider);
+  if (chosen != null) return chosen;
+
+  final biggest = ref.watch(genreCountsProvider).keys.take(defaultGenreCount);
+  return <String?>[...biggest];
 });
 
 final matchScoresProvider = Provider.autoDispose((ref) {
