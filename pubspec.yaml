@@ -21,7 +21,10 @@ dependencies:
   flutter_riverpod: ^3.5.0
   flutter_svg: ^2.5.0
   just_audio: ^0.10.6
-  just_audio_media_kit: ^2.1.0
+  just_audio_media_kit:
+    git:
+      url: https://github.com/jaisawhney/just_audio_media_kit.git
+      ref: 5f8a0b846c9934c865a8cc53afd7df2e0e7db145
   material_ui: ^1.11.1
   media_kit_libs_linux: ^1.2.1
   media_kit_libs_windows_audio: ^1.0.9
