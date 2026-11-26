@@ -25,10 +25,6 @@ class Sidebar extends StatelessWidget {
             SvgPicture.asset('assets/icon/crate.svg', width: 40, height: 40),
             const SizedBox(height: 12),
             Text('Crate', style: theme.textTheme.titleMedium),
-            Text(
-              'Search your music by sound',
-              style: theme.textTheme.bodySmall,
-            ),
           ],
         ),
       ),

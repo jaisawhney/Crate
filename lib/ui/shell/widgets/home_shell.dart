@@ -40,7 +40,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     if (ready.isLoading) return _loading();
     if (ready.hasError) {
       return EmptyState(
-        title: 'Failed to load model',
+        title: "Couldn't load SonicEmbed",
         message: '${ready.error}',
         action: FilledButton(
           onPressed: ref.read(shellViewModelProvider.notifier).retry,
@@ -56,11 +56,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     if (folders.isEmpty) {
       return EmptyState(
         icon: Icons.library_music_outlined,
-        title: 'Add your music',
-        message: 'Pick the folder that holds your songs.',
+        title: 'No music yet',
         action: FilledButton(
           onPressed: ref.read(libraryProvider.notifier).addFolder,
-          child: const Text('Add music folder'),
+          child: const Text('Add folder'),
         ),
       );
     }

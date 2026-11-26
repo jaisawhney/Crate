@@ -25,9 +25,8 @@ class LibraryScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageHeader(
-            overline: 'Library',
-            title: 'Your music',
-            subtitle: '$songs songs · ${formatHours(length)} of music',
+            title: 'Library',
+            subtitle: '$songs songs · ${formatHours(length)}',
             trailing: FilledButton.tonalIcon(
               icon: const Icon(Icons.create_new_folder_outlined),
               label: const Text('Add folder'),
@@ -72,7 +71,6 @@ class _Folders extends ConsumerWidget {
 
     return Panel(
       title: 'Folders',
-      subtitle: 'Where your songs come from',
       child: ListView(
         children: [
           for (final folder in folders)
@@ -117,7 +115,7 @@ class _SongSearch extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SearchBar(
-      hintText: 'Search by title, artist or genre',
+      hintText: 'Search songs',
       leading: const Icon(Icons.search),
       onChanged: ref.read(songSearchProvider.notifier).set,
     );
@@ -134,7 +132,7 @@ class _Songs extends ConsumerWidget {
     final playback = ref.read(playbackProvider.notifier);
     final playbackState = ref.watch(playbackProvider);
 
-    var subtitle = 'Tap a song to play it from the start';
+    String? subtitle;
     if (tracks.length < total) subtitle = '${tracks.length} of $total songs';
     return Panel(
       title: 'Songs',
