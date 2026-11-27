@@ -40,7 +40,7 @@ class ResultsPanel extends ConsumerWidget {
         title: 'Results',
         child: EmptyState(
           title: 'Search for a sound',
-          message: 'Like "agressive music" or "crowd cheering"',
+          message: 'Like "aggressive music" or "crowd cheering"',
         ),
       );
     }
