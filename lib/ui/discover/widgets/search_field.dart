@@ -44,7 +44,7 @@ class _SearchFieldState extends ConsumerState<SearchField> {
 
     return SearchBar(
       controller: _controller,
-      hintText: 'Try “aggressive music”',
+      hintText: 'Describe a sound',
       leading: const Icon(Icons.search),
       trailing: [
         if (query.isNotEmpty)

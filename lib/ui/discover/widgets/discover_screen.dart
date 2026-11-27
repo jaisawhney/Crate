@@ -17,27 +17,14 @@ class DiscoverScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const PageHeader(
-              overline: 'Discover',
-              title: 'Hear what you describe',
-              subtitle:
-                  'Describe a sound to jump to where it happens. The map '
-                  'groups songs by how they sound, so you can see if your '
-                  'genre tags agree.',
-            ),
+            const PageHeader(title: 'Discover'),
             const SizedBox(height: 16),
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Expanded(
-                    child: Panel(
-                      title: 'Sound map',
-                      subtitle:
-                          'Songs that sound alike sit close together · one '
-                          'dot per song',
-                      child: SoundMap(),
-                    ),
+                    child: Panel(title: 'Sound map', child: SoundMap()),
                   ),
                   const SizedBox(width: 16),
                   SizedBox(

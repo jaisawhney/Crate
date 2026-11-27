@@ -14,17 +14,14 @@ import 'genre_colors.dart';
 class ResultsPanel extends ConsumerWidget {
   const ResultsPanel({super.key});
 
-  static const _partial =
-      'Still analyzing your library, some songs are missing';
+  static const _partial = 'Still analyzing, some songs are missing';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final analyzing = ref.watch(analyzingProvider);
     final moment = ref.watch(momentQueryProvider);
     if (moment != null) {
-      var subtitle =
-          'Songs that sound like it around ${formatDuration(moment.start)}';
+      var subtitle = 'Around ${formatDuration(moment.start)}';
       if (analyzing) subtitle = _partial;
       return Panel(
         title: 'Similar to ${moment.track.title}',
@@ -39,28 +36,19 @@ class ResultsPanel extends ConsumerWidget {
 
     final query = ref.watch(queryProvider);
     if (query.isEmpty) {
-      return Panel(
-        title: 'Matches',
-        subtitle: 'Search for a sound to see them here',
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Describe what you want to hear, like a quiet piano intro or a '
-              'crowd cheering, and jump straight to the part of each song '
-              'that sounds like it.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
+      return const Panel(
+        title: 'Results',
+        child: EmptyState(
+          title: 'Search for a sound',
+          message: 'Like "agressive music" or "crowd cheering"',
         ),
       );
     }
 
-    var subtitle = 'Each song plays from the part that fits best';
+    String? subtitle;
     if (analyzing) subtitle = _partial;
     return Panel(
-      title: 'Matches',
+      title: 'Results',
       subtitle: subtitle,
       child: _matches(context, ref),
     );

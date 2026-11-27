@@ -1,16 +1,14 @@
 import 'package:material_ui/material_ui.dart';
 
 class PageHeader extends StatelessWidget {
-  final String overline;
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final Widget? trailing;
 
   const PageHeader({
     super.key,
-    required this.overline,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     this.trailing,
   });
 
@@ -25,10 +23,9 @@ class PageHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(overline.toUpperCase(), style: theme.textTheme.labelSmall),
-              const SizedBox(height: 2),
               Text(title, style: theme.textTheme.headlineSmall),
-              Text(subtitle, style: theme.textTheme.bodyMedium),
+              if (subtitle case final subtitle?)
+                Text(subtitle, style: theme.textTheme.bodyMedium),
             ],
           ),
         ),
