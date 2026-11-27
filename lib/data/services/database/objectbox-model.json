@@ -109,14 +109,16 @@
         {
           "id": "4:9218119814140849310",
           "name": "embedding",
-          "type": 28
+          "indexId": "5:5007968718037978050",
+          "type": 28,
+          "flags": 8
         }
       ],
       "relations": []
     }
   ],
   "lastEntityId": "3:7188275137260985492",
-  "lastIndexId": "4:3880847021306090175",
+  "lastIndexId": "5:5007968718037978050",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

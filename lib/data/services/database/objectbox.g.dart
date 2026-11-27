@@ -143,7 +143,9 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(4, 9218119814140849310),
         name: 'embedding',
         type: 28,
-        flags: 0,
+        flags: 8,
+        indexId: const obx_int.IdUid(5, 5007968718037978050),
+        hnswParams: obx_int.ModelHnswParams(dimensions: 768, distanceType: 2),
       ),
     ],
     relations: <obx_int.ModelRelation>[],
@@ -195,7 +197,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
     lastEntityId: const obx_int.IdUid(3, 7188275137260985492),
-    lastIndexId: const obx_int.IdUid(4, 3880847021306090175),
+    lastIndexId: const obx_int.IdUid(5, 5007968718037978050),
     lastRelationId: const obx_int.IdUid(0, 0),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [],
@@ -474,7 +476,7 @@ class Moment_ {
   );
 
   /// See [Moment.embedding].
-  static final embedding = obx.QueryDoubleVectorProperty<Moment>(
+  static final embedding = obx.QueryHnswProperty<Moment>(
     _entities[2].properties[3],
   );
 }

@@ -39,9 +39,21 @@ class LibraryDatabaseService {
 
   List<Track?> loadTracksById(List<int> ids) => _tracks.getMany(ids);
 
-  List<Moment> loadAllMoments() => _find(
-    _moments.query().order(Moment_.trackId).order(Moment_.startSeconds),
+  List<Moment> loadMoments(int trackId) => _find(
+    _moments.query(Moment_.trackId.equals(trackId)).order(Moment_.startSeconds),
   );
+
+  List<ObjectWithScore<Moment>> searchMoments(
+    List<double> embedding,
+    int count,
+  ) {
+    final query = _moments
+        .query(Moment_.embedding.nearestNeighborsF32(embedding, count))
+        .build();
+    final results = query.findWithScores();
+    query.close();
+    return results;
+  }
 
   void saveMoments(List<Moment> moments) => _moments.putMany(moments);
 
