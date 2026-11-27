@@ -10,6 +10,7 @@ class Moment {
 
   int startSeconds;
 
+  @HnswIndex(dimensions: 768, distanceType: VectorDistanceType.cosine)
   @Property(type: PropertyType.floatVector)
   List<double> embedding;
 
