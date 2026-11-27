@@ -4,7 +4,7 @@ Crate digging through your own music library. Describe a sound and Crate finds t
 
 Search runs on [SonicEmbed](https://huggingface.co/jaisawhney/SonicEmbed), a music and text embedding model I fine-tuned from EmbeddingGemma. Inference runs on your computer through LiteRT-LM, and your songs are never uploaded.
 
-![Discover page](images/discover.png)
+![Searching, finding similar songs and coloring the sound map](images/demo.gif)
 
 ## Key Features
 
